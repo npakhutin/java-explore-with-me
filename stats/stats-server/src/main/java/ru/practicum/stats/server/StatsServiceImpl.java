@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.stats.dto.HitDto;
 import ru.practicum.stats.dto.StatsDto;
+import ru.practicum.stats.server.exception.BadRequestException;
 import ru.practicum.stats.server.repository.StatsRepository;
 
 import java.time.LocalDateTime;
@@ -24,6 +25,9 @@ public class StatsServiceImpl implements StatsService {
 
     @Override
     public List<StatsDto> stats(LocalDateTime start, LocalDateTime end, List<String> uriList, Boolean unique) {
+        if (start == null || end == null || start.isAfter(end)) {
+            throw new BadRequestException("Задан неправильный диапазон дат");
+        }
 
         return repository.stats(start, end, uriList, unique);
     }
