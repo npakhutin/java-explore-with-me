@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
-import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.DefaultUriBuilderFactory;
 import ru.practicum.stats.dto.HitDto;
@@ -27,8 +26,8 @@ public class StatsClientImpl extends BaseClient implements StatsClient {
     @Autowired
     public StatsClientImpl(@Value("${stats-server.url}") String serverUrl, RestTemplateBuilder builder) {
         super(builder.uriTemplateHandler(new DefaultUriBuilderFactory(serverUrl))
-                      .requestFactory(() -> new HttpComponentsClientHttpRequestFactory())
-                      .build());
+                     .requestFactory(() -> new HttpComponentsClientHttpRequestFactory())
+                     .build());
     }
 
     @Override
@@ -42,18 +41,22 @@ public class StatsClientImpl extends BaseClient implements StatsClient {
     }
 
     @Override
-    public List<StatsDto> stats(@NonNull LocalDateTime start,
-                                @NonNull LocalDateTime end,
-                                List<String> uriList,
-                                Boolean unique) {
+    public List<StatsDto> stats(LocalDateTime start, LocalDateTime end, List<String> uriList, Boolean unique) {
+        StringBuilder sb = new StringBuilder("/stats?");
         Map<String, Object> parameters = new HashMap<>();
-        parameters.put("start", start.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-        parameters.put("end", end.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-        parameters.put("uris", uriList);
+        if (start != null) {
+            parameters.put("start", start.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+            sb.append("start={start}&");
+        }
+        if (end != null) {
+            parameters.put("end", end.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+            sb.append("end={end}&");
+        }
+        parameters.put("uris", String.join(",", uriList));
         parameters.put("unique", unique);
+        sb.append("uris={uris}&unique={unique}");
 
-        ResponseEntity<Object> responseEntity = get("/stats?start={start}&end={end}&uris={uris}&unique={unique}",
-                                                    parameters);
+        ResponseEntity<Object> responseEntity = get(sb.toString(), parameters);
         if (!responseEntity.getStatusCode().is2xxSuccessful()) {
             throw new RuntimeException("Произошла ошибка " + responseEntity.getStatusCode());
         }

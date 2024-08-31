@@ -41,8 +41,12 @@ public class CustomStatsRepositoryImpl implements CustomStatsRepository {
         }
 
         List<Predicate> predicates = new ArrayList<>();
-        predicates.add(cb.and(cb.greaterThanOrEqualTo(h.get(Hit.Fields.timestamp), start),
-                              cb.lessThanOrEqualTo(h.get(Hit.Fields.timestamp), end)));
+        if (start != null) {
+            predicates.add(cb.greaterThanOrEqualTo(h.get(Hit.Fields.timestamp), start));
+        }
+        if (end != null) {
+            predicates.add(cb.lessThanOrEqualTo(h.get(Hit.Fields.timestamp), end));
+        }
         if (uriList != null && !uriList.isEmpty()) {
             predicates.add(h.get(Hit.Fields.uri).in(uriList));
         }
