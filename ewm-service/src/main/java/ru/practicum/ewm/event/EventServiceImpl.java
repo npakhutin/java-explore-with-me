@@ -19,18 +19,20 @@ import ru.practicum.ewm.category.CategoryRepository;
 import ru.practicum.ewm.event.dto.AddEventRqDto;
 import ru.practicum.ewm.event.dto.EventFullDto;
 import ru.practicum.ewm.event.dto.EventShortDto;
+import ru.practicum.ewm.event.dto.FindEventsAdminParams;
+import ru.practicum.ewm.event.dto.FindEventsParams;
 import ru.practicum.ewm.event.dto.UpdateEventRqDto;
 import ru.practicum.ewm.event.mapper.EventMapper;
 import ru.practicum.ewm.event.model.Event;
 import ru.practicum.ewm.event.model.EventSortOrder;
 import ru.practicum.ewm.event.model.EventState;
 import ru.practicum.ewm.event.model.EventStateAction;
-import ru.practicum.ewm.service.EwmStatsClient;
 import ru.practicum.ewm.service.exception.BadRequestException;
 import ru.practicum.ewm.service.exception.ConflictException;
 import ru.practicum.ewm.service.exception.NotFoundException;
 import ru.practicum.ewm.user.User;
 import ru.practicum.ewm.user.UserRepository;
+import ru.practicum.stats.client.StatsClient;
 import ru.practicum.stats.dto.StatsDto;
 
 import java.time.LocalDateTime;
@@ -44,6 +46,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class EventServiceImpl implements EventService {
+    private final StatsClient statsClient;
     private final EntityManager em;
     private final EventRepository eventRepository;
     private final UserRepository userRepository;
@@ -79,7 +82,8 @@ public class EventServiceImpl implements EventService {
                                        .orElseThrow(() -> new NotFoundException(
                                                "Не найден пользователь id = " + initiatorId));
 
-        PageRequest pageable = PageRequest.of(start, size, Sort.by(Event.Fields.id).ascending());
+        int pageNumber = size != 0 ? start / size : 0;
+        PageRequest pageable = PageRequest.of(pageNumber, size, Sort.by(Event.Fields.id).ascending());
         Page<Event> foundEvents = eventRepository.findByInitiator(initiator, pageable);
 
         return foundEvents.stream().map(EventMapper::mapToShortDto).collect(Collectors.toList());
@@ -110,8 +114,7 @@ public class EventServiceImpl implements EventService {
             }
         }
 
-        EventFullDto result = EventMapper.mapToFullDto(eventRepository.save(event));
-        return result;
+        return EventMapper.mapToFullDto(eventRepository.save(event));
     }
 
     @Override
@@ -119,8 +122,8 @@ public class EventServiceImpl implements EventService {
     public EventFullDto findEventById(Long eventId, HttpServletRequest request) {
         Event event = eventRepository.findByIdAndState(eventId, EventState.PUBLISHED)
                                      .orElseThrow(() -> new NotFoundException("Не найдено событие id = " + eventId));
-        EwmStatsClient.hit(request);
-        List<StatsDto> stats = EwmStatsClient.stats(event.getCreatedOn(),
+        statsClient.hit("ewm", request.getRequestURI(), request.getRemoteAddr());
+        List<StatsDto> stats = statsClient.stats(event.getCreatedOn(),
                                                     LocalDateTime.now(),
                                                     List.of(request.getRequestURI()),
                                                     true);
@@ -139,14 +142,10 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public List<EventFullDto> findEventsAdmin(List<Integer> users,
-                                              List<EventState> states,
-                                              List<Integer> categories,
-                                              LocalDateTime rangeStart,
-                                              LocalDateTime rangeEnd,
+    public List<EventFullDto> findEventsAdmin(FindEventsAdminParams params,
                                               Integer start,
                                               Integer size) {
-        DateRange dateRange = populateRange(rangeStart, rangeEnd);
+        DateRange dateRange = populateRange(params.rangeStart(), params.rangeEnd());
 
         CriteriaBuilder cb = em.getCriteriaBuilder();
         CriteriaQuery<Event> q = cb.createQuery(Event.class);
@@ -159,14 +158,14 @@ public class EventServiceImpl implements EventService {
         List<Predicate> predicates = new ArrayList<>();
         predicates.add(cb.and(cb.greaterThanOrEqualTo(e.get(Event.Fields.eventDate), dateRange.start()),
                               cb.lessThanOrEqualTo(e.get(Event.Fields.eventDate), dateRange.end())));
-        if (users != null && !users.isEmpty()) {
-            predicates.add(e.get(Event.Fields.initiator).get(User.Fields.id).in(users));
+        if (params.users() != null && !params.users().isEmpty()) {
+            predicates.add(e.get(Event.Fields.initiator).get(User.Fields.id).in(params.users()));
         }
-        if (states != null && !states.isEmpty()) {
-            predicates.add(e.get(Event.Fields.state).in(states));
+        if (params.states() != null && !params.states().isEmpty()) {
+            predicates.add(e.get(Event.Fields.state).in(params.states()));
         }
-        if (categories != null && !categories.isEmpty()) {
-            predicates.add(e.get(Event.Fields.category).get(Category.Fields.id).in(categories));
+        if (params.categories() != null && !params.categories().isEmpty()) {
+            predicates.add(e.get(Event.Fields.category).get(Category.Fields.id).in(params.categories()));
         }
 
         q.where(predicates.toArray(new Predicate[]{}));
@@ -181,17 +180,12 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public List<EventShortDto> findEvents(String text,
-                                          List<Integer> categories,
-                                          Boolean paid,
-                                          LocalDateTime rangeStart,
-                                          LocalDateTime rangeEnd,
-                                          Boolean onlyAvailable,
+    public List<EventShortDto> findEvents(FindEventsParams params,
                                           EventSortOrder sort,
                                           Integer start,
                                           Integer size,
                                           HttpServletRequest request) {
-        DateRange dateRange = populateRange(rangeStart, rangeEnd);
+        DateRange dateRange = populateRange(params.rangeStart(), params.rangeEnd());
 
         CriteriaBuilder cb = em.getCriteriaBuilder();
         CriteriaQuery<Event> q = cb.createQuery(Event.class);
@@ -201,18 +195,18 @@ public class EventServiceImpl implements EventService {
         q.select(e);
 
         List<Predicate> predicates = new ArrayList<>();
-        predicates.add(cb.or(cb.like(cb.upper(e.get(Event.Fields.annotation)), text.toUpperCase()),
-                             cb.like(cb.upper(e.get(Event.Fields.description)), text.toUpperCase())));
+        predicates.add(cb.or(cb.like(cb.upper(e.get(Event.Fields.annotation)), params.text().toUpperCase()),
+                             cb.like(cb.upper(e.get(Event.Fields.description)), params.text().toUpperCase())));
         predicates.add(cb.equal(e.get(Event.Fields.state), EventState.PUBLISHED));
-        if (paid != null) {
-            predicates.add(cb.equal(e.get(Event.Fields.paid), paid));
+        if (params.paid() != null) {
+            predicates.add(cb.equal(e.get(Event.Fields.paid), params.paid()));
         }
         predicates.add(cb.and(cb.greaterThanOrEqualTo(e.get(Event.Fields.eventDate), dateRange.start()),
                               cb.lessThanOrEqualTo(e.get(Event.Fields.eventDate), dateRange.end())));
-        if (categories != null && !categories.isEmpty()) {
-            predicates.add(e.get(Event.Fields.category).get(Category.Fields.id).in(categories));
+        if (params.categories() != null && !params.categories().isEmpty()) {
+            predicates.add(e.get(Event.Fields.category).get(Category.Fields.id).in(params.categories()));
         }
-        if (onlyAvailable != null && onlyAvailable) {
+        if (params.onlyAvailable() != null && params.onlyAvailable()) {
             predicates.add(cb.lessThan(e.get(Event.Fields.confirmedRequests), e.get(Event.Fields.participantLimit)));
         }
         if (sort == EventSortOrder.EVENT_DATE) {
@@ -227,7 +221,7 @@ public class EventServiceImpl implements EventService {
         tq.setMaxResults(size);
         List<Event> foundEvents = tq.getResultList();
 
-        EwmStatsClient.hit(request);
+        statsClient.hit("ewm", request.getRequestURI(), request.getRemoteAddr());
 
         Map<String, Event> uriList = new HashMap<>();
         LocalDateTime eventMinDateCreated = LocalDateTime.now();
@@ -237,7 +231,7 @@ public class EventServiceImpl implements EventService {
                                   event.getCreatedOn() :
                                   eventMinDateCreated;
         }
-        List<StatsDto> stats = EwmStatsClient.stats(eventMinDateCreated,
+        List<StatsDto> stats = statsClient.stats(eventMinDateCreated,
                                                     LocalDateTime.now(),
                                                     new ArrayList<>(uriList.keySet()),
                                                     true);

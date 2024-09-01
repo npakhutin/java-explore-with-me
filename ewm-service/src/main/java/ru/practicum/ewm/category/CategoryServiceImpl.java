@@ -7,6 +7,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.category.dto.CategoryDto;
 import ru.practicum.ewm.category.dto.CategoryRqDto;
+import ru.practicum.ewm.event.EventRepository;
+import ru.practicum.ewm.service.exception.ConflictException;
 import ru.practicum.ewm.service.exception.NotFoundException;
 
 import java.util.List;
@@ -17,6 +19,7 @@ import java.util.stream.Collectors;
 @Transactional
 public class CategoryServiceImpl implements CategoryService {
     private final CategoryRepository categoryRepository;
+    private final EventRepository eventRepository;
 
     @Override
     public CategoryDto addNewCategory(CategoryRqDto categoryRqDto) {
@@ -26,13 +29,18 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public void deleteById(Long id) {
+        if (eventRepository.countByCategoryId(id) > 0) {
+            throw new ConflictException("Удаление категории невозможно - существуют события, с ней связанные",
+                                        "Можно удалять только категории, на которые не существует ссылок");
+        }
         categoryRepository.deleteById(id);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<CategoryDto> findAll(Integer start, Integer size) {
-        PageRequest pageable = PageRequest.of(start, size, Sort.by(Category.Fields.id).ascending());
+        int pageNumber = size != 0 ? start / size : 0;
+        PageRequest pageable = PageRequest.of(pageNumber, size, Sort.by(Category.Fields.id).ascending());
         return categoryRepository.findAll(pageable).stream().map(CategoryMapper::mapToDto).collect(Collectors.toList());
     }
 

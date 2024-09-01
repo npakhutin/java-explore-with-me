@@ -42,7 +42,6 @@ public class CategoryController {
     }
 
     @PatchMapping("/admin/categories/{id}")
-    @ResponseStatus(HttpStatus.OK)
     public CategoryDto updateById(@PathVariable Long id, @RequestBody @Valid CategoryRqDto categoryRqDto) {
         return categoryService.updateById(id, categoryRqDto);
     }

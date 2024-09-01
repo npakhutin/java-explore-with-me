@@ -31,7 +31,8 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional(readOnly = true)
     public List<UserDto> findByIds(List<Long> idList, Integer start, Integer size) {
-        PageRequest pageable = PageRequest.of(start, size, Sort.by(User.Fields.id).ascending());
+        int pageNumber = size != 0 ? start / size : 0;
+        PageRequest pageable = PageRequest.of(pageNumber, size, Sort.by(User.Fields.id).ascending());
         Page<User> foundUsers;
         if (idList.isEmpty()) {
             foundUsers = userRepository.findAll(pageable);

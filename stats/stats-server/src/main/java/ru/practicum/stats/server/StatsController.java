@@ -30,7 +30,6 @@ public class StatsController {
     }
 
     @GetMapping("/stats")
-    @ResponseStatus(HttpStatus.OK)
     public List<StatsDto> stats(
             @RequestParam(name = "start", defaultValue = "") @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
             LocalDateTime start,

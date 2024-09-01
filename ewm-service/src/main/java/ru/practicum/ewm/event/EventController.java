@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.RestController;
 import ru.practicum.ewm.event.dto.AddEventRqDto;
 import ru.practicum.ewm.event.dto.EventFullDto;
 import ru.practicum.ewm.event.dto.EventShortDto;
+import ru.practicum.ewm.event.dto.FindEventsAdminParams;
+import ru.practicum.ewm.event.dto.FindEventsParams;
 import ru.practicum.ewm.event.dto.UpdateEventRqDto;
 import ru.practicum.ewm.event.model.EventSortOrder;
 import ru.practicum.ewm.event.model.EventState;
@@ -32,7 +34,6 @@ public class EventController {
     private final EventService eventService;
 
     @PatchMapping("/admin/events/{eventId}")
-    @ResponseStatus(HttpStatus.OK)
     public EventFullDto updateEventAdmin(@PathVariable Long eventId,
                                          @RequestBody @Validated(EventPatcher.Admin.class)
                                          UpdateEventRqDto eventRqDto) {
@@ -40,7 +41,6 @@ public class EventController {
     }
 
     @GetMapping("/admin/events")
-    @ResponseStatus(HttpStatus.OK)
     public List<EventFullDto> findEventsAdmin(@RequestParam(name = "users", defaultValue = "") List<Integer> users,
                                               @RequestParam(name = "states", defaultValue = "") List<EventState> states,
                                               @RequestParam(name = "categories",
@@ -53,11 +53,11 @@ public class EventController {
                                               LocalDateTime rangeEnd,
                                               @RequestParam(name = "from", defaultValue = "0") Integer start,
                                               @RequestParam(name = "size", defaultValue = "10") Integer size) {
-        return eventService.findEventsAdmin(users, states, categories, rangeStart, rangeEnd, start, size);
+        FindEventsAdminParams params = new FindEventsAdminParams(users, states, categories, rangeStart, rangeEnd);
+        return eventService.findEventsAdmin(params, start, size);
     }
 
     @GetMapping("/users/{initiatorId}/events")
-    @ResponseStatus(HttpStatus.OK)
     public List<EventShortDto> findUserEvents(@PathVariable Long initiatorId,
                                               @RequestParam(name = "from", defaultValue = "0") Integer start,
                                               @RequestParam(name = "size", defaultValue = "10") Integer size) {
@@ -65,7 +65,6 @@ public class EventController {
     }
 
     @GetMapping("/users/{initiatorId}/events/{eventId}")
-    @ResponseStatus(HttpStatus.OK)
     public EventFullDto findUserEventById(@PathVariable Long initiatorId, @PathVariable Long eventId) {
         return eventService.findUserEventById(initiatorId, eventId);
     }
@@ -77,7 +76,6 @@ public class EventController {
     }
 
     @PatchMapping("/users/{userId}/events/{eventId}")
-    @ResponseStatus(HttpStatus.OK)
     public EventFullDto updateEventUser(@PathVariable Long userId,
                                         @PathVariable Long eventId,
                                         @RequestBody @Validated(EventPatcher.Initiator.class)
@@ -86,13 +84,11 @@ public class EventController {
     }
 
     @GetMapping("/events/{eventId}")
-    @ResponseStatus(HttpStatus.OK)
     public EventFullDto findEventById(@PathVariable Long eventId, HttpServletRequest request) {
         return eventService.findEventById(eventId, request);
     }
 
     @GetMapping("/events")
-    @ResponseStatus(HttpStatus.OK)
     public List<EventShortDto> findEvents(@RequestParam(name = "text", defaultValue = "%") String text,
                                           @RequestParam(name = "categories",
                                                         defaultValue = "") List<Integer> categories,
@@ -109,12 +105,8 @@ public class EventController {
                                           @RequestParam(name = "from", defaultValue = "0") Integer start,
                                           @RequestParam(name = "size", defaultValue = "10") Integer size,
                                           HttpServletRequest request) {
-        return eventService.findEvents(text,
-                                       categories,
-                                       paid,
-                                       rangeStart,
-                                       rangeEnd,
-                                       onlyAvailable,
+        FindEventsParams params = new FindEventsParams(text, categories, paid, rangeStart, rangeEnd, onlyAvailable);
+        return eventService.findEvents(params,
                                        sort,
                                        start,
                                        size,

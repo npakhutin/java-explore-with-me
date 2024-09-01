@@ -24,7 +24,6 @@ public class ParticipationRequestController {
     private final ParticipationRequestService requestService;
 
     @GetMapping("/users/{requesterId}/requests")
-    @ResponseStatus(HttpStatus.OK)
     public List<ParticipationRequestDto> findUserParticipationRequests(@PathVariable Long requesterId) {
         return requestService.findUserParticipationRequests(requesterId);
     }
@@ -37,14 +36,12 @@ public class ParticipationRequestController {
     }
 
     @PatchMapping("/users/{requesterId}/requests/{requestId}/cancel")
-    @ResponseStatus(HttpStatus.OK)
     public ParticipationRequestDto cancelUserParticipationRequest(@PathVariable Long requesterId,
                                                                   @PathVariable Long requestId) {
         return requestService.cancelUserParticipationRequest(requesterId, requestId);
     }
 
     @PatchMapping("/users/{initiatorId}/events/{eventId}/requests")
-    @ResponseStatus(HttpStatus.OK)
     public ParticipationRequestStatusUpdateRs updateEventParticipationRequestsStatus(@PathVariable Long initiatorId,
                                                                                      @PathVariable Long eventId,
                                                                                      @RequestBody ParticipationRequestStatusUpdateRq statusUpdateRq) {
@@ -52,7 +49,6 @@ public class ParticipationRequestController {
     }
 
     @GetMapping("/users/{initiatorId}/events/{eventId}/requests")
-    @ResponseStatus(HttpStatus.OK)
     public List<ParticipationRequestDto> findEventParticipationRequests(@PathVariable Long initiatorId,
                                                                         @PathVariable Long eventId) {
         return requestService.findEventParticipationRequests(initiatorId, eventId);

@@ -32,6 +32,10 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
         User requester = userRepository.findById(requesterId)
                                        .orElseThrow(() -> new NotFoundException(
                                                "Не найден пользователь id = " + requesterId));
+        if (requestRepository.findByRequesterIdAndEventId(requesterId, eventId) != null) {
+            throw new ConflictException("Уже существует заявка пользователя на участие в указанном событии",
+                                        "Можно создать только одну заявку на участие в событии");
+        }
         Event event = eventRepository.findById(eventId)
                                      .orElseThrow(() -> new NotFoundException("Не найдено событие id = " + eventId));
         if (requester.equals(event.getInitiator())) {

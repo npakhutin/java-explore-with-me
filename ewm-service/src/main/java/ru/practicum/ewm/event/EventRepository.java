@@ -18,6 +18,8 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 
     Optional<Event> findByIdAndInitiatorId(Long eventId, Long initiatorId);
 
+    int countByCategoryId(Long categoryId);
+
     @Modifying
     @Query(value = """
             update Event e set e.confirmedRequests = (

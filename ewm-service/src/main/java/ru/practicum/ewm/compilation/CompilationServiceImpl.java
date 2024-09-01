@@ -1,6 +1,7 @@
 package ru.practicum.ewm.compilation;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -14,7 +15,6 @@ import ru.practicum.ewm.service.exception.NotFoundException;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,21 +32,20 @@ public class CompilationServiceImpl implements CompilationService {
             events = new ArrayList<>();
         }
         Compilation compilation = compilationRepository.save(CompilationMapper.mapToCompilation(addCompilationRqDto.getTitle(),
-                                                                                                Optional.ofNullable(
-                                                                                                                addCompilationRqDto.getPinned())
-                                                                                                        .orElse(false),
+                                                                                                addCompilationRqDto.isPinned(),
                                                                                                 events));
         return CompilationMapper.mapToDto(compilation);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<CompilationDto> findAll(Integer start, Integer size) {
-        PageRequest pageable = PageRequest.of(start, size, Sort.by(Compilation.Fields.id).ascending());
-        return compilationRepository.findAll(pageable)
-                                    .stream()
-                                    .map(CompilationMapper::mapToDto)
-                                    .collect(Collectors.toList());
+    public List<CompilationDto> findCompilations(Boolean pinned, Integer start, Integer size) {
+        int pageNumber = size != 0 ? start / size : 0;
+        PageRequest pageable = PageRequest.of(pageNumber, size, Sort.by(Compilation.Fields.id).ascending());
+        Page<Compilation> foundCompilations = pinned == null ?
+                                              compilationRepository.findAll(pageable) :
+                                              compilationRepository.findAllByPinned(pinned, pageable);
+        return foundCompilations.stream().map(CompilationMapper::mapToDto).collect(Collectors.toList());
     }
 
     @Override

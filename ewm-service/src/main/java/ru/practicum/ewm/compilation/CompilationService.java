@@ -9,7 +9,7 @@ import java.util.List;
 public interface CompilationService {
     CompilationDto addNewCompilation(AddCompilationRqDto addCompilationRqDto);
 
-    List<CompilationDto> findAll(Integer start, Integer size);
+    List<CompilationDto> findCompilations(Boolean pinned, Integer start, Integer size);
 
     CompilationDto findById(Long id);
 

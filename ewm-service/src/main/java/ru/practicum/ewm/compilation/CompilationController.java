@@ -26,9 +26,10 @@ public class CompilationController {
     private final CompilationService compilationService;
 
     @GetMapping("/compilations")
-    public List<CompilationDto> findByAll(@RequestParam(name = "from", defaultValue = "0") Integer start,
-                                          @RequestParam(name = "size", defaultValue = "10") Integer size) {
-        return compilationService.findAll(start, size);
+    public List<CompilationDto> findCompilations(@RequestParam(name = "pinned", defaultValue = "") Boolean pinned,
+                                                 @RequestParam(name = "from", defaultValue = "0") Integer start,
+                                                 @RequestParam(name = "size", defaultValue = "10") Integer size) {
+        return compilationService.findCompilations(pinned, start, size);
     }
 
     @GetMapping("/compilations/{id}")
@@ -43,7 +44,6 @@ public class CompilationController {
     }
 
     @PatchMapping("/admin/compilations/{id}")
-    @ResponseStatus(HttpStatus.OK)
     public CompilationDto updateById(@PathVariable Long id,
                                      @RequestBody @Valid UpdateCompilationRqDto updateCompilationRqDto) {
         return compilationService.updateById(id, updateCompilationRqDto);

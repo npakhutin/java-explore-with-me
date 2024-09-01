@@ -14,7 +14,7 @@ import java.util.List;
 @NoArgsConstructor
 public class AddCompilationRqDto {
     private List<Long> events = new ArrayList<>();
-    private Boolean pinned;
+    private boolean pinned = false;
     @NotBlank(message = "Заголовок подборки не может быть пустым")
     @Size(min = 1, max = 50, message = "Заголовок подборки должен укладываться в диапазон 1-50 символов")
     private String title;
