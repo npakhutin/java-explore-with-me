@@ -1,3 +1,5 @@
+drop table if exists subscriptions cascade;
+
 drop table if exists event_compilation cascade;
 
 drop table if exists compilations cascade;
@@ -64,5 +66,14 @@ create table if not exists event_compilation (
     constraint pk_event_compilation primary key (
         event_id,
         compilation_id
+    )
+);
+
+create table if not exists subscriptions (
+    subscriber_id BIGINT not null references users(id),
+    events_initiator_id BIGINT not null references users(id),
+    constraint pk_subscriptions primary key (
+        subscriber_id,
+        events_initiator_id
     )
 );
