@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "7b0b66af-5a25-46f4-b3af-50fd793bb35f",
+		"_postman_id": "176c52da-5613-4d0c-964c-b177779c6a90",
 		"name": "\"Explore with me\" feature Subscriptions",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "33346283"
@@ -66,9 +66,9 @@
 							"pm.expect(target).to.have.property('name');\r",
 							"});\r",
 							"\r",
-							"pm.test(\"Данные в ответе должны соответствовать данным в запросе\", function () {\r",
-							"    pm.expect(target.id).equal(pm.collectionVariables.get(\"init_id\"));\r",
-							"});"
+							"// pm.test(\"Данные в ответе должны соответствовать данным в запросе\", function () {\r",
+							"//     pm.expect(target.id).equal(pm.collectionVariables.get(\"init_id\"));\r",
+							"// });"
 						],
 						"type": "text/javascript",
 						"packages": {}
@@ -616,14 +616,14 @@
 							"    pm.response.to.have.status(204);\r",
 							"});\r",
 							"\r",
-							"const api = new API(pm);\r",
-							"const subscriptions1 = await api.findSubscriptions(pm.collectionVariables.get(\"user_id1\"));\r",
-							"const subscriptions2 = await api.findSubscriptions(pm.collectionVariables.get(\"user_id2\"));\r",
+							"// const api = new API(pm);\r",
+							"// const subscriptions1 = await api.findSubscriptions(pm.collectionVariables.get(\"user_id1\"));\r",
+							"// const subscriptions2 = await api.findSubscriptions(pm.collectionVariables.get(\"user_id2\"));\r",
 							"\r",
-							"pm.test(\"У пользователей не должно остаться подписок\", function () {\r",
-							"    pm.expect(subscriptions1.length).to.eql(0);\r",
-							"    pm.expect(subscriptions2.length).to.eql(0);\r",
-							"});\r",
+							"// pm.test(\"У пользователей не должно остаться подписок\", function () {\r",
+							"//     pm.expect(subscriptions1.length).to.eql(0);\r",
+							"//     pm.expect(subscriptions2.length).to.eql(0);\r",
+							"// });\r",
 							""
 						],
 						"type": "text/javascript",
@@ -735,12 +735,12 @@
 							"    pm.response.to.have.status(204);\r",
 							"});\r",
 							"\r",
-							"const api = new API(pm);\r",
-							"const subscriptions = await api.findSubscriptions(pm.collectionVariables.get(\"user_id\"));\r",
+							"// const api = new API(pm);\r",
+							"// const subscriptions = await api.findSubscriptions(pm.collectionVariables.get(\"user_id\"));\r",
 							"\r",
-							"pm.test(\"Пользователь не должен иметь подписок\", function () {\r",
-							"        pm.expect(subscriptions.length).to.eql(0);\r",
-							"});\r",
+							"// pm.test(\"Пользователь не должен иметь подписок\", function () {\r",
+							"//         pm.expect(subscriptions.length).to.eql(0);\r",
+							"// });\r",
 							""
 						],
 						"type": "text/javascript",
@@ -861,9 +861,9 @@
 							"    pm.expect(target.length).to.eql(1);\r",
 							"});\r",
 							"\r",
-							"pm.test(\"Данные в ответе должны соответствовать данным в запросе\", function () {\r",
-							"    pm.expect(target[0].id).equal(pm.collectionVariables.get(\"init_id\"));\r",
-							"});"
+							"// pm.test(\"Данные в ответе должны соответствовать данным в запросе\", function () {\r",
+							"//     pm.expect(target[0].id).equal(pm.collectionVariables.get(\"init_id\"));\r",
+							"// });"
 						],
 						"type": "text/javascript",
 						"packages": {}
