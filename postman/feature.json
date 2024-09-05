@@ -68,8 +68,8 @@
 							"});\r",
 							"\r",
 							"pm.test(\"Данные в ответе должны соответствовать данным в запросе\", function () {\r",
-							"    pm.expect(target.subscriber.id).equal(pm.collectionVariables.get(\"user_id\"));\r",
-							"    pm.expect(target.eventInitiator.id).equal(pm.collectionVariables.get(\"init_id\"));\r",
+							"    pm.expect(target.subscriber.id.toString()).equal(pm.collectionVariables.get(\"user_id\").toString());\r",
+							"    pm.expect(target.eventInitiator.id.toString()).equal(pm.collectionVariables.get(\"init_id\").toString());\r",
 							"});"
 						],
 						"type": "text/javascript",
