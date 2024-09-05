@@ -1,16 +1,15 @@
 package ru.practicum.ewm.subscription;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.service.exception.BadRequestException;
 import ru.practicum.ewm.service.exception.NotFoundException;
 import ru.practicum.ewm.user.User;
-import ru.practicum.ewm.user.UserMapper;
 import ru.practicum.ewm.user.UserRepository;
-import ru.practicum.ewm.user.dto.UserShortDto;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -20,9 +19,10 @@ import java.util.stream.Collectors;
 @Transactional
 public class SubscriptionServiceImpl implements SubscriptionService {
     private final UserRepository userRepository;
+    private final SubscriptionRepository subscriptionRepository;
 
     @Override
-    public UserShortDto addNewSubscription(Long subscriberId, Long eventsInitiatorId) {
+    public SubscriptionDto addNewSubscription(Long subscriberId, Long eventsInitiatorId) {
         if ((Objects.equals(subscriberId, eventsInitiatorId))) {
             throw new BadRequestException("Пользователь не может подписаться на самого себя");
         }
@@ -32,42 +32,28 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         User eventsInitiator = userRepository.findById(eventsInitiatorId)
                                              .orElseThrow(() -> new NotFoundException(
                                                      "Не найден пользователь id = " + eventsInitiatorId));
-        if (subscriber.getSubscriptions().contains(eventsInitiator)) {
-            throw new BadRequestException("Пользователь уже подписан события указанного инициатора");
-        }
-        subscriber.getSubscriptions().add(eventsInitiator);
-        userRepository.save(subscriber);
-
-        return UserMapper.mapToShortDto(eventsInitiator);
+        Subscription subscription = new Subscription(null, subscriber, eventsInitiator);
+        return SubscriptionMapper.mapToDto(subscriptionRepository.save(subscription));
     }
 
     @Override
-    public void deleteSubscription(Long subscriberId, Long eventsInitiatorId) {
-        User subscriber = userRepository.findById(subscriberId)
-                                        .orElseThrow(() -> new NotFoundException(
-                                                "Не найден пользователь id = " + subscriberId));
-        User eventsInitiator = userRepository.findById(eventsInitiatorId)
-                                             .orElseThrow(() -> new NotFoundException(
-                                                     "Не найден пользователь id = " + eventsInitiatorId));
-        subscriber.getSubscriptions().remove(eventsInitiator);
-        userRepository.save(subscriber);
+    public void deleteSubscription(Long subscriptionId) {
+        subscriptionRepository.deleteById(subscriptionId);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<UserShortDto> findAllSubscriptions(Long subscriberId, Integer start, Integer size) {
+    public List<SubscriptionDto> findAllUserSubscriptions(Long subscriberId, Integer start, Integer size) {
         User subscriber = userRepository.findById(subscriberId)
                                         .orElseThrow(() -> new NotFoundException(
                                                 "Не найден пользователь id = " + subscriberId));
-        if (subscriber.getSubscriptions().isEmpty() || start >= subscriber.getSubscriptions().size()) {
-            return new ArrayList<>();
-        }
-        int end = Math.min(size, subscriber.getSubscriptions().size());
-        return subscriber.getSubscriptions()
-                         .subList(start, end)
-                         .stream()
-                         .map(UserMapper::mapToShortDto)
-                         .collect(Collectors.toList());
+        int pageNumber = size != 0 ? start / size : 0;
+        PageRequest pageable = PageRequest.of(pageNumber, size, Sort.by(User.Fields.id).ascending());
+
+        return subscriptionRepository.findAllBySubscriber(subscriber, pageable)
+                                     .stream()
+                                     .map(SubscriptionMapper::mapToDto)
+                                     .collect(Collectors.toList());
     }
 
     @Override
@@ -75,11 +61,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         User eventsInitiator = userRepository.findById(eventsInitiatorId)
                                              .orElseThrow(() -> new NotFoundException(
                                                      "Не найден пользователь id = " + eventsInitiatorId));
-        List<User> subscribers = userRepository.findAllSubscribers(eventsInitiator);
-        for (User subscriber : subscribers) {
-            subscriber.getSubscriptions().remove(eventsInitiator);
-        }
-        userRepository.saveAll(subscribers);
+        subscriptionRepository.deleteByEventsInitiator(eventsInitiator);
     }
 
     @Override
@@ -87,7 +69,6 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         User subscriber = userRepository.findById(subscriberId)
                                         .orElseThrow(() -> new NotFoundException(
                                                 "Не найден пользователь id = " + subscriberId));
-        subscriber.getSubscriptions().clear();
-        userRepository.save(subscriber);
+        subscriptionRepository.deleteBySubscriber(subscriber);
     }
 }

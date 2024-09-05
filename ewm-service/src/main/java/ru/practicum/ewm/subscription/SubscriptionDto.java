@@ -12,5 +12,6 @@ import ru.practicum.ewm.user.dto.UserShortDto;
 @Builder
 public class SubscriptionDto {
     private Long id;
-    private UserShortDto initiator;
+    private UserShortDto subscriber;
+    private UserShortDto eventInitiator;
 }

@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import ru.practicum.ewm.user.dto.UserShortDto;
 
 import java.util.List;
 
@@ -21,21 +20,23 @@ public class SubscriptionController {
     private final SubscriptionService subscriptionService;
 
     @GetMapping("/users/{subscriberId}/subscriptions")
-    public List<UserShortDto> findAllSubscriptions(@PathVariable Long subscriberId,
-                                                   @RequestParam(name = "from", defaultValue = "0") Integer start,
-                                                   @RequestParam(name = "size", defaultValue = "10") Integer size) {
-        return subscriptionService.findAllSubscriptions(subscriberId, start, size);
+    public List<SubscriptionDto> findAllUserSubscriptions(@PathVariable Long subscriberId,
+                                                          @RequestParam(name = "from",
+                                                                        defaultValue = "0") Integer start,
+                                                          @RequestParam(name = "size",
+                                                                        defaultValue = "10") Integer size) {
+        return subscriptionService.findAllUserSubscriptions(subscriberId, start, size);
     }
 
-    @DeleteMapping("/users/{subscriberId}/subscriptions/{eventsInitiatorId}")
+    @DeleteMapping("/users/{subscriberId}/subscriptions/{subscriptionId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteById(@PathVariable Long subscriberId, @PathVariable Long eventsInitiatorId) {
-        subscriptionService.deleteSubscription(subscriberId, eventsInitiatorId);
+    public void deleteById(@PathVariable Long subscriptionId) {
+        subscriptionService.deleteSubscription(subscriptionId);
     }
 
     @PostMapping("/users/{subscriberId}/subscriptions/{eventsInitiatorId}")
     @ResponseStatus(HttpStatus.CREATED)
-    public UserShortDto addNewSubscription(@PathVariable Long subscriberId, @PathVariable Long eventsInitiatorId) {
+    public SubscriptionDto addNewSubscription(@PathVariable Long subscriberId, @PathVariable Long eventsInitiatorId) {
         return subscriptionService.addNewSubscription(subscriberId, eventsInitiatorId);
     }
 
