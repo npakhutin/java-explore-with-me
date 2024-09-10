@@ -25,8 +25,8 @@ public class CategoryController {
     private final CategoryService categoryService;
 
     @GetMapping("/categories")
-    public List<CategoryDto> findByAll(@RequestParam(name = "from", defaultValue = "0") Integer start,
-                                       @RequestParam(name = "size", defaultValue = "10") Integer size) {
+    public List<CategoryDto> findAll(@RequestParam(name = "from", defaultValue = "0") Integer start,
+                                     @RequestParam(name = "size", defaultValue = "10") Integer size) {
         return categoryService.findAll(start, size);
     }
 

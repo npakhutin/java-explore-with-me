@@ -106,7 +106,7 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
         } else if (statusUpdateRq.getStatus() == ParticipationRequestStatus.CONFIRMED) {
             // если пришло подтверждение участия, то берем количество свободных слотов из события
             int freeSlots = event.getParticipantLimit() - event.getConfirmedRequests();
-            // иначе сохраняем статус Подтвердить у первых freeSlots заявок,
+            // сохраняем статус Подтвердить у первых freeSlots заявок,
             for (ParticipationRequest request : foundRequests.subList(0, Math.min(freeSlots, foundRequests.size()))) {
                 request.setStatus(ParticipationRequestStatus.CONFIRMED);
                 result.getConfirmedRequests().add(ParticipationRequestMapper.maptoDto(request));
